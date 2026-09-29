@@ -37,12 +37,12 @@ llegues a la parte correspondiente.
 
 | Hallazgo | Manual (B) | SonarQube for IDE sin conexión (D) | SonarQube for IDE en Connected Mode (E) | SonarQube Cloud (F) | CodeQL (F) | Semgrep (G) | Trivy (K) |
 |---|---|---|---|---|---|---|---|
-| H1 Inyección SQL en `buscar_reportes_cliente` |  |  |  |  |  |  | n/a |
-| H2 Inyección de comandos en `convertir_a_pdf` |  |  |  |  |  |  | n/a |
-| H3 Deserialización YAML insegura en `cargar_configuracion` |  |  |  |  |  |  | n/a |
-| H4 Hash MD5 en `hash_password_legacy` |  |  |  |  |  |  | n/a |
-| H5 Clave de API escrita en el código |  |  |  |  |  |  |  |
-| H6 Contraseña SMTP escrita en el código |  |  |  |  |  |  |  |
+| H1 Inyección SQL en `buscar_reportes_cliente` | ✓ (Parte B, síntoma `o'brien_ltd` → 500) | ✗ (observado por ti 29-09: sin conexión no lo marca) | ✓ (observado por ti 29-09: aparece al vincular, taint servidor) | ✓ `pythonsecurity:S3649` en `app/reporte_auditoria.py:42` | ✓ `py/sql-injection` en `app/reporte_auditoria.py:42` (error) | pendiente Parte H | n/a |
+| H2 Inyección de comandos en `convertir_a_pdf` | ✓ (Parte B) | ✗ (observado por ti 29-09: sin conexión no lo marca) | ✓ (observado por ti 29-09: aparece al vincular, taint servidor) | ✓ `pythonsecurity:S2076` en `app/reporte_auditoria.py:51` | ✓ `py/command-line-injection` en `app/reporte_auditoria.py:51` (error) | pendiente Parte H | n/a |
+| H3 Deserialización YAML insegura en `cargar_configuracion` | ✓ (Parte B, `yaml.Loader` completo) | ✗ (observado por ti 29-09) | ✗ (observado por ti 29-09: ni conectado lo marca) | ✗ (sin issue en `app/reporte_auditoria.py:33` en el análisis de `main` del 29-09) | ✗ (sin alerta CodeQL; 4 alertas totales y ninguna en línea 33) | pendiente Parte H | n/a |
+| H4 Hash MD5 en `hash_password_legacy` | ✓ (Parte B) | ✓ (observado por ti 29-09) | ✓ (se mantiene en Connected Mode) | ✓ `python:S4790` en `app/reporte_auditoria.py:57` (CRITICAL) | ✓ `py/weak-sensitive-data-hashing` en `app/reporte_auditoria.py:57` (warning) | pendiente Parte H | n/a |
+| H5 Clave de API escrita en el código | ✓ (Parte B, `NOTIFICATION_API_KEY` línea 21) | ✗ (observado por ti 29-09) | ✗ (observado por ti 29-09) | ✗ directo en línea 21 (solo hay hallazgos en línea 22); indirecto: `py/clear-text-logging-sensitive-data` en línea 62 (CodeQL) | ✗ como secreto; indirecto ✓ `py/clear-text-logging-sensitive-data` en `app/reporte_auditoria.py:62` (usa la clave en `print`) | pendiente Parte H | pendiente Parte K |
+| H6 Contraseña SMTP escrita en el código | ✓ (Parte B, `SMTP_PASSWORD` línea 22) | ✓ (observado por ti 29-09) | ✓ (se mantiene en Connected Mode) | ✓ `python:S2068` (MAJOR) + `secrets:S7552` (BLOCKER) en `app/reporte_auditoria.py:22` | ✗ como secreto (misma nota indirecta línea 62 que H5) | pendiente Parte H | pendiente Parte K |
 
 **Conclusión de la matriz** (Parte K): ¿alguna herramienta lo detectó todo? ¿Qué
 te dice eso sobre depender de una sola herramienta?
@@ -79,12 +79,20 @@ justificación.
 
 | Medida | Antes | Después |
 |---|---|---|
-| Hallazgos de Semgrep en `app/` |  |  |
-| Alertas abiertas de CodeQL (Security → Code scanning) |  |  |
-| Vulnerabilidades en SonarQube Cloud (rama main) |  |  |
-| Security Hotspots por revisar en SonarQube Cloud |  |  |
-| Vulnerabilidades de Grype sobre el SBOM |  |  |
-| Alertas abiertas de Dependabot |  |  |
+| Hallazgos de Semgrep en `app/` | pendiente Parte H |  |
+| Alertas abiertas de CodeQL (Security → Code scanning) | 4 (29-09-2026, rama `main` tras PR #1): `py/sql-injection:42`, `py/command-line-injection:51`, `py/weak-sensitive-data-hashing:57`, `py/clear-text-logging-sensitive-data:62` |  |
+| Vulnerabilidades en SonarQube Cloud (rama main) | 6 (29-09-2026): `python:S2068:22`, `secrets:S7552:22`, `pythonsecurity:S3649:42`, `pythonsecurity:S2076:51`, `python:S4790:57`, `python:S4502:app/servicio.py:25` |  |
+| Security Hotspots por revisar en SonarQube Cloud | 0 (API `hotspots/search`, 29-09-2026) |  |
+| Vulnerabilidades de Grype sobre el SBOM | pendiente Parte J/K |  |
+| Alertas abiertas de Dependabot | pendiente Parte I (secret `SONAR_TOKEN` ya en Actions y Dependabot) |  |
+
+### Evidencias Partes E–G (trazabilidad)
+- PR #1 `ci(seguridad): activar pipeline SonarQube + CodeQL`: https://github.com/marcosgaarciiia/reportaudit-lab/pull/1 (squash `f7c2737`, 4 checks verdes).
+- Run de `push` a `main` tras el merge: `36589995957` (success).
+- Protección de `main`: requiere PR + 1 aprobación + checks `SAST - SonarQube Cloud` y `SAST - CodeQL` (`enforce_admins: true`).
+- SonarCloud: proyecto `marcosgaarciiia_reportaudit-lab`, org `marcosgaarciiia`, `Automatic Analysis` desactivado, análisis vía `SonarSource/sonarqube-scan-action@v7`.
+- Token `reportaudit-ci` original expuesto en chat → revocado por ti el 29-09; secreto `SONAR_TOKEN` rotado en Actions y Dependabot (verificado con `gh api .../actions/secrets` y `.../dependabot/secrets`).
+- Nota: `python:S4502` en `app/servicio.py:25` (CSRF) es un hallazgo del framework, fuera de H1–H6; se valorará en la Parte M si se corrige o se justifica.
 
 ---
 
