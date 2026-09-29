@@ -16,3 +16,6 @@ tools/
 
 # --- Secretos locales: NUNCA se versionan ---
 .env
+
+# --- Config local de SonarQube for IDE (Connected Mode) ---
+.sonarlint/
