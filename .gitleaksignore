@@ -1,0 +1,3 @@
+# Credentials exposed in the import commit and rotated in Part M.
+ab5f1c0ce5d0f219fd0af71bd47d874a26086f9d:app/reporte_auditoria.py:reportaudit-hardcoded-credential:21
+ab5f1c0ce5d0f219fd0af71bd47d874a26086f9d:app/reporte_auditoria.py:reportaudit-hardcoded-credential:22
