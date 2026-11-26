@@ -1,0 +1,70 @@
+
+Report Summary
+
+┌──────────────────┬──────┬─────────────────┬─────────┐
+│      Target      │ Type │ Vulnerabilities │ Secrets │
+├──────────────────┼──────┼─────────────────┼─────────┤
+│ requirements.txt │ pip  │       13        │    -    │
+└──────────────────┴──────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+requirements.txt (pip)
+======================
+Total: 13 (UNKNOWN: 0, LOW: 1, MEDIUM: 11, HIGH: 1, CRITICAL: 0)
+
+┌──────────┬─────────────────┬──────────┬────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
+│ Library  │  Vulnerability  │ Severity │ Status │ Installed Version │ Fixed Version │                            Title                             │
+├──────────┼─────────────────┼──────────┼────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ flask    │ CVE-2026-27205  │ LOW      │ fixed  │ 3.0.0             │ 3.1.3         │ flask: Flask: Information disclosure via improper caching of │
+│          │                 │          │        │                   │               │ session data                                                 │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-27205                   │
+├──────────┼─────────────────┼──────────┤        ├───────────────────┤               ├──────────────────────────────────────────────────────────────┤
+│ jinja2   │ CVE-2024-22195  │ MEDIUM   │        │ 3.1.2             │               │ jinja2: HTML attribute injection when passing user input as  │
+│          │                 │          │        │                   │               │ keys to xmlattr...                                           │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-22195                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2024-34064  │          │        │                   │ 3.1.4         │ jinja2: accepts keys containing non-attribute characters     │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-34064                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2024-56201  │          │        │                   │ 3.1.5         │ jinja2: Jinja has a sandbox breakout through malicious       │
+│          │                 │          │        │                   │               │ filenames                                                    │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-56201                   │
+│          ├─────────────────┤          │        │                   │               ├──────────────────────────────────────────────────────────────┤
+│          │ CVE-2024-56326  │          │        │                   │               │ jinja2: Jinja has a sandbox breakout through indirect        │
+│          │                 │          │        │                   │               │ reference to format method...                                │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-56326                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2025-27516  │          │        │                   │ 3.1.6         │ jinja2: Jinja sandbox breakout through attr filter selecting │
+│          │                 │          │        │                   │               │ format method                                                │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2025-27516                   │
+├──────────┼─────────────────┼──────────┤        ├───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ werkzeug │ CVE-2024-34069  │ HIGH     │        │ 3.0.1             │ 3.0.3         │ python-werkzeug: user may execute code on a developer's      │
+│          │                 │          │        │                   │               │ machine                                                      │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-34069                   │
+│          ├─────────────────┼──────────┤        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2024-49766  │ MEDIUM   │        │                   │ 3.0.6         │ werkzeug: python-werkzeug: Werkzeug safe_join not safe on    │
+│          │                 │          │        │                   │               │ Windows                                                      │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-49766                   │
+│          ├─────────────────┤          │        │                   │               ├──────────────────────────────────────────────────────────────┤
+│          │ CVE-2024-49767  │          │        │                   │               │ werkzeug: python-werkzeug: Werkzeug possible resource        │
+│          │                 │          │        │                   │               │ exhaustion when parsing file data in forms...                │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2024-49767                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2025-66221  │          │        │                   │ 3.1.4         │ Werkzeug: Werkzeug: Denial of service via Windows device     │
+│          │                 │          │        │                   │               │ names in path segments...                                    │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2025-66221                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-102598 │          │        │                   │ 3.1.9         │ werkzeug: werkzeug: Denial of Service via safe_join()        │
+│          │                 │          │        │                   │               │ Windows special device paths                                 │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-102598                  │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-21860  │          │        │                   │ 3.1.5         │ Werkzeug safe_join() allows Windows special device names     │
+│          │                 │          │        │                   │               │ with compound extensions                                     │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-21860                   │
+│          ├─────────────────┤          │        │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-27199  │          │        │                   │ 3.1.6         │ Werkzeug safe_join() allows Windows special device names     │
+│          │                 │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-27199                   │
+└──────────┴─────────────────┴──────────┴────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘
