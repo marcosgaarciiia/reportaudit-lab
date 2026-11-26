@@ -1,0 +1,19 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/marcosgaarciiia/reportaudit-lab/vex/2026-001",
+  "author": "Marcos García Arroyo <289295426+marcosgaarciiia@users.noreply.github.com>",
+  "timestamp": "2026-11-26T16:30:00+01:00",
+  "version": 1,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2024-34069",
+        "aliases": ["GHSA-2g68-c3qc-8985", "PYSEC-2026-2043"]
+      },
+      "products": [ { "@id": "pkg:pypi/werkzeug@3.0.1" } ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "CVE-2024-34069 only affects the interactive Werkzeug debugger (code execution through the debugger console after an attacker obtains the debugger PIN). ReportAudit never enables that debugger: app/servicio.py line 64 starts the service with app.run(host=\"127.0.0.1\", port=..., debug=False), there is no other app.run, no use_debugger/use_reloader option and no DebuggedApplication middleware anywhere in app/ (checked with: grep -rn \"debug\\|DebuggedApplication\" app/). The vulnerable code path is therefore never loaded. The package is still upgraded to a fixed version through the Dependabot security update (Part M.5); this statement documents why the alert was not treated as an emergency in the meantime."
+    }
+  ]
+}
