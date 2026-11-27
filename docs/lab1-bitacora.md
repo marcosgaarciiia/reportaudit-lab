@@ -136,8 +136,8 @@ llegues a la parte correspondiente.
 13. **Alerta de Dependabot vs. check `SCA - pip-audit`.** Una alerta de Dependabot informa y propone un PR, pero no impide fusionar nada: es asíncrona y vive en la pestaña Security. `SCA - pip-audit` es un check obligatorio de la protección de `main`: si un PR introduce o mantiene una dependencia con un aviso conocido, el PR no se puede fusionar (lo comprobé con el PR de prueba de Werkzeug 3.0.1).
 14. **`gh attestation verify`.** Demuestra que `reportaudit-1.0.0.tar.gz` lo produjo mi workflow `publicar-version.yml`, desde mi repositorio y desde la etiqueta `v1.0.0`, y que no se ha modificado desde entonces (firma Sigstore con identidad OIDC del workflow y registro de transparencia). No demuestra que el código sea seguro: eso lo garantizan los checks de cada PR y el SBOM. `SHA256SUMS` no basta porque quien pueda sustituir el archivo en la Release o en un espejo también puede sustituir `SHA256SUMS`; la firma del workflow no se puede falsificar.
 15. **Canal privado y SECURITY.md.** Un Issue es público: describir la vulnerabilidad ahí la divulga antes de que exista el parche, y regala a los atacantes una ventana de explotación. El canal privado (*private vulnerability reporting*) deja el informe visible solo para el responsable y el investigador, y permite el triage, un borrador de aviso (GHSA) y una corrección en privado hasta la divulgación coordinada. `SECURITY.md` dice cómo informar, qué versiones tienen soporte y hasta cuándo, qué plazos de respuesta se comprometen y que hay *safe harbour* para quien actúa de buena fe.
-16. **Scorecard y el 0 en Maintained.** *(se responde en la Parte S, con los resultados reales de Scorecard)*
-17. **Expediente vs. respuesta B5 de la Práctica 2.** *(se responde en la Parte T, al cerrar el expediente)*
+16. **Scorecard y el 0 en Maintained.** ReportAudit saca un 6.9/10, con 0 en *Maintained*. Ese 0 no dice que el proyecto esté abandonado: Scorecard da 0 a todo repositorio creado hace menos de 90 días («project was created within the last 90 days») para no premiar proyectos que nadie ha visto durar. Mejora solo, con el tiempo y con actividad sostenida (commits, Issues atendidos), y no se arregla con ningún cambio de configuración. Lo que sí está en mi mano: fijar las actions por hash (*Pinned-Dependencies* 0, con Dependabot actualizando esos hashes), publicar la procedencia con un nombre que Scorecard reconozca (*Signed-Releases* 8) y añadir una licencia. La nota es un indicador de prácticas, no una prueba de seguridad: un 10 no garantiza que el código sea seguro, y el N/A en *Branch-Protection* demuestra que también tiene puntos ciegos (la protección de `main` existe y es estricta, pero el token no la puede leer).
+17. **Expediente vs. respuesta B5 de la Práctica 2.** En la Práctica 2 las evidencias eran una lista de lo que *habría que* poder enseñar. Ahora once de las doce filas del expediente apuntan a algo que un tercero puede abrir y comprobar él mismo: el SBOM atestado y la procedencia Sigstore de la v1.0.0, los checks obligatorios en el commit publicado, el PR de corrección, SECURITY.md con el periodo de soporte, el canal privado y la trazabilidad Issue → PR → revisión. Lo que sigue sin existir: la evaluación de riesgos documentada, la documentación técnica del Anexo VII, la declaración UE de conformidad y el marcado CE; un aviso de seguridad publicado de verdad (el GHSA es un borrador de simulacro); el proceso para notificar a ENISA una vulnerabilidad explotada (art. 14); y la rotación real de las credenciales, que aquí se declara pero no se puede demostrar con un proveedor real.
 
 ---
 
@@ -151,11 +151,85 @@ llegues a la parte correspondiente.
 | #6 | Enable Dependabot alerts and security updates | PR #18 (Refs) + cierre manual tras I.3 |
 | #7 | Remediate the findings of the security audit | PR #21 |
 | #8 | Upgrade the vulnerable dependencies | PR #24 (manual con pip-compile: Dependabot no generó alertas a tiempo) |
-| #9 | Publish the audit log and the before/after evidence | este PR (Parte N) |
+| #9 | Publish the audit log and the before/after evidence | PR #25 |
 | #10 | Detect ReportAudit credentials in the whole Git history | PR #22 |
-| #11 | Make SCA and secret scanning required checks on main | pendiente (Parte P) |
+| #11 | Make SCA and secret scanning required checks on main | PR #26 + PR #28 (corrección del job) + PR de prueba #27 cerrado sin fusionar; cierre manual tras P.4 |
 | #12 | Publish a security policy and a private vulnerability reporting channel | PR #23 (Refs) + cierre manual tras Q.3 |
-| #13 | Release v1.0.0 with an SBOM and signed provenance | pendiente (Parte R) |
-| #14 | Measure supply-chain maturity with OpenSSF Scorecard | pendiente (Parte S) |
-| #15 | Build the CRA evidence index | pendiente (Parte T) |
+| #13 | Release v1.0.0 with an SBOM and signed provenance | PR #29 (Refs) + Release v1.0.0; cierre manual tras R.3 |
+| #14 | Measure supply-chain maturity with OpenSSF Scorecard | PR #30 |
+| #15 | Build the CRA evidence index | este PR (Parte T) |
 
+PRs de Dependabot #19 (`sonarqube-scan-action` 7→8) y #20 (`actions/checkout` 6→7): cerrados sin fusionar con comentario. Son subidas de versión mayor de actions de CI, no correcciones de seguridad; se revisarán contra su changelog en un PR propio después de v1.0.0.
+
+---
+
+## Bloque final — Publicar y demostrar (Partes O–T)
+
+### O. Secretos en el historial (Gitleaks)
+
+| Escaneo | Comando | N.º de hallazgos | Commit(s) donde aparecen |
+|---|---|---|---|
+| Código actual, reglas por defecto | `gitleaks dir app` | **0** (`no leaks found`) | — |
+| Historial, reglas por defecto | `gitleaks git .` | **1** — `generic-api-key`, `app/reporte_auditoria.py:21` (`NOTIFICATION_API_KEY`); la contraseña SMTP **no** la detecta | `ab5f1c0` (chore: importar repositorio base de ReportAudit) |
+| Historial, con regla propia | `gitleaks git . -c .gitleaks.toml` | **2** — `reportaudit-hardcoded-credential` en las líneas 21 y 22 | `ab5f1c0` (las dos) |
+| Historial, tras .gitleaksignore | `gitleaks git . -c .gitleaks.toml` | **0** (`no leaks found`); y `gitleaks dir app -c .gitleaks.toml` → 0 (la regla no confunde `os.environ.get(...)` con un secreto) | — |
+
+¿Por qué el código actual está limpio y el historial no? ¿Qué medida de la Parte M cierra el riesgo
+y cuál no lo cierra?
+
+`gitleaks dir app` mira los archivos de hoy, y desde el PR #21 las credenciales se leen de variables de entorno: no hay nada que encontrar. `gitleaks git .` recorre todos los commits, y el de importación (`ab5f1c0`) sigue conteniendo los dos valores: cualquiera que clone el repositorio los ve con `git log -p`. De la Parte M, **sacar las credenciales del código no cierra el riesgo** (solo limpia la versión actual). Lo que lo cierra es la **rotación declarada**: los valores del historial dejan de servir. Las reglas por defecto solo vieron la clave de API (por su entropía), no la contraseña SMTP; por eso se escribe una regla propia que reconoce las credenciales de ReportAudit por el nombre de la variable.
+
+**Baseline vs. desactivar la regla:** `.gitleaksignore` registra dos hallazgos concretos (commit + archivo + regla + línea) de credenciales ya rotadas, con el motivo comentado y revisado en el PR. La regla sigue activa: cualquier secreto nuevo, aunque esté en el mismo archivo, hará fallar el análisis. Desactivar la regla, en cambio, lo ocultaría todo, lo pasado y lo futuro.
+
+### P. Puertas obligatorias en main
+
+| Check | ¿Exigido en main? | Resultado en el PR de prueba (test/puerta-sca) |
+|---|---|---|
+| SAST - SonarQube Cloud | Sí (desde G.6) | ✅ pasa |
+| SAST - CodeQL | Sí (desde G.6) | ✅ pasa |
+| SCA - pip-audit | Sí (P.4) | ❌ **falla**: `werkzeug 3.0.1` con 7 avisos (PYSEC-2026-2043, -2045, -1860, -2046, -2044…), cada uno con su versión corregida (3.0.3 – 3.1.5) |
+| Secretos - Gitleaks | Sí (P.4) | ✅ pasa |
+
+PR de prueba #27 (borrador): baja `werkzeug` a 3.0.1. La puerta SCA lo bloquea y el botón de fusionar queda deshabilitado; se cerró **sin fusionar** y se borró la rama `test/puerta-sca`. En el primer intento el job fallaba por un conflicto de dependencias y no por las vulnerabilidades (`disable-pip` no es una entrada válida de `pypa/gh-action-pip-audit@v1.1.0`); se corrigió en el PR #28 (`internal-be-careful-extra-flags: "--disable-pip"`) y se repitió la prueba. Protección de `main`: PR obligatorio con 1 aprobación, aprobaciones obsoletas descartadas, rama al día, conversaciones resueltas, 4 checks obligatorios y sin excepciones (*bypass*).
+
+### Q. Divulgación coordinada (simulacro)
+
+- Informe recibido de (usuario de GitHub): **Tonsete** (Antonio García Gallego), por *Security → Report a vulnerability*
+- Identificador del borrador de aviso (GHSA-…): **GHSA-w9w9-jj58-646h** — aceptado como borrador (*Accept and open as draft*), visible solo para los dos; sin CVE solicitado ni publicación
+- Severidad y vector CVSS: **Moderate, 6.5** — `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N` (red; baja complejidad; requiere ser usuario de la API interna; confidencialidad alta: se leen los reportes de todos los clientes; la consulta es un SELECT, sin impacto en integridad ni disponibilidad)
+- CWE: CWE-89 (SQL Injection)
+- Versiones afectadas / versión corregida: `< 1.0.0` / `1.0.0` (paquete pip `reportaudit`) · Créditos: Tonsete como *finder* · comentario de agradecimiento en el borrador
+
+### R. Versión 1.0.0 verificable
+
+| Comprobación | Comando | Resultado |
+|---|---|---|
+| Huellas SHA-256 | `sha256sum -c SHA256SUMS` | ✅ `reportaudit-1.0.0.tar.gz: OK` y `reportaudit-sbom.cdx.json: OK` |
+| Procedencia (SLSA) | `gh attestation verify reportaudit-1.0.0.tar.gz --repo marcosgaarciiia/reportaudit-lab` | ✅ `✓ Procedencia verificada`: predicado `https://slsa.dev/provenance/v1`, SHA-256 `992289cc…`, firmante `…/.github/workflows/publicar-version.yml@refs/tags/v1.0.0`, emisor `https://token.actions.githubusercontent.com` |
+| SBOM atestado | `gh attestation verify … --predicate-type https://cyclonedx.org/bom` | ✅ `✓ SBOM atestado verificado`: predicado `https://cyclonedx.org/bom` sobre el mismo SHA-256 `992289cc…` y firmado por el mismo workflow |
+| Archivo alterado | `gh attestation verify alterado.tar.gz --repo marcosgaarciiia/reportaudit-lab` | ❌ **falla** como debe: `HTTP 404` — no existe ninguna atestación para `sha256:22c2a4d6…` (el original es `992289cc…`) |
+
+Release: https://github.com/marcosgaarciiia/reportaudit-lab/releases/tag/v1.0.0 — publicada por `github-actions[bot]` desde el commit `948067e` con 5 ficheros: `reportaudit-1.0.0.tar.gz`, `reportaudit-sbom.cdx.json`, `SHA256SUMS`, `reportaudit-provenance.sigstore.json` y `reportaudit-sbom.sigstore.json`. Workflow: https://github.com/marcosgaarciiia/reportaudit-lab/actions/runs/46015686761 (job *Release - SBOM y procedencia*, 15 s). Para verificar hace falta GitHub CLI ≥ 2.49: la 2.46 de los repositorios de Ubuntu no trae `gh attestation`, así que instalé la versión oficial.
+
+### S. Madurez (OpenSSF Scorecard)
+
+| Check | Puntuación (0–10) | Qué la explica |
+|---|---|---|
+| Puntuación global | **6.9** | Scorecard v5.5.0 sobre el commit `948067e` (27-11-2026), ya con la release publicada |
+| Maintained | 0 | El repositorio tiene menos de 90 días: Scorecard da 0 a cualquier proyecto nuevo, haga lo que haga (ver pregunta 16) |
+| Pinned-Dependencies | 0 | Las actions están fijadas por etiqueta (`@v6`), no por hash de commit; una etiqueta se puede mover (caso Trivy, marzo de 2026) |
+| Code-Review | 7 | 12 de 16 cambios aprobados: el commit de importación y el PR #1 entraron sin revisión, antes de exigirla |
+| Signed-Releases | 8 | La release lleva artefactos firmados con Sigstore; no llega a 10 porque Scorecard solo reconoce la procedencia por el nombre `*.intoto.jsonl` |
+| Token-Permissions | 10 | Todos los workflows parten de permisos de solo lectura y cada job pide solo lo que necesita |
+| Branch-Protection | N/A | El `GITHUB_TOKEN` del workflow no puede leer reglas de protección clásicas; haría falta un token personal de larga duración como secreto, y no lo añado |
+
+Otros 10: Dangerous-Workflow, Dependency-Update-Tool, Security-Policy, Binary-Artifacts, Vulnerabilities (0 conocidas), SAST y CI-Tests (13/13 PRs). En 0 también License (sin fichero de licencia), CII-Best-Practices, Fuzzing y Contributors, que no son objetivos de este laboratorio. Informe: https://scorecard.dev/viewer/?uri=github.com/marcosgaarciiia/reportaudit-lab
+
+### T. Expediente de evidencias
+
+Ver `docs/cra/expediente-evidencias.md`.
+
+Compara el expediente con tu respuesta B5 de la Práctica 2: ¿qué evidencia imaginaste que ahora
+existe de verdad, y cuál sigue sin existir?
+
+Ver la respuesta 17. Resumen: existe y se puede verificar todo lo técnico del Anexo I, Parte II (SBOM, gestión de vulnerabilidades, divulgación coordinada, distribución firmada, periodo de soporte). Sigue sin existir la parte documental y organizativa del CRA (evaluación de riesgos, Anexo VII, declaración UE, marcado CE, notificación a ENISA).
